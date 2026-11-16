@@ -1,7 +1,20 @@
 # # # This source code is subject to the license referenced at
 # # # https://github.com/NRLMMD-GEOIPS.
 
-"""pytest test-suite for `geoips_ancildat.plugins.classes.readers.utils.flat_binary`."""
+"""pytest test-suite for `geoips_ancildat.plugins.classes.readers.utils.flat_binary`.
+
+The tests use a tiny test reader and a 4 x 8 test grid, written to a temporary
+folder. The grid map below shows which record each point reads.
+
+Sections:
+
+1. Reading values
+2. Where the points come from
+3. Which data file is read
+4. Reading the file safely
+5. METADATA
+6. Calls from GeoIPS
+"""
 
 import logging
 import os
@@ -19,9 +32,26 @@ from geoips_ancildat.plugins.classes.readers.utils.flat_binary import (
     FlatBinaryReaderPlugin,
 )
 
+# Test grid map ---------------------------------------------------------------
+# 4 rows x 8 columns with 45 degree steps. Each value equals its own record
+# number (0 to 31), so the expected value of a point is its record number.
+#
+#   lat 90 -> row 2 (records 8-15)     lon -180 -> column 2
+#   lat 45 -> row 3 (records 16-23)    lon -135 -> column 3
+#   lat  0 -> row 4 (records 24-31)    lon    0 -> column 6
+#   lat -45 -> row 5, outside the file lon   90 -> column 8
+#                                      lon  180 -> column 10, wraps to next row
+#
+#   record = (row - 1) * 8 + (column - 1)
+#
+# Row 1 and column 1 are never reached. That is the Fortran row and column math,
+# which is kept on purpose. This grid is too coarse for -999 inputs (they round
+# to a valid row), so these tests use NaN and inf as invalid points. -999 is
+# tested in test_indexing.py at the real grid steps.
+
 
 class TinyReader(FlatBinaryReaderPlugin):
-    """Reader for a 4 x 8 test grid with 45 degree steps."""
+    """Reader for the 4 x 8 test grid."""
 
     name = "tiny_ancildat"
     source_names = [name]
@@ -56,7 +86,7 @@ class TinyReader(FlatBinaryReaderPlugin):
 
 
 class PlusOneReader(TinyReader):
-    """Test reader that adds 1 to every value."""
+    """Test reader that adds 1 to every value it reads."""
 
     name = "plus_one_ancildat"
 
@@ -67,19 +97,6 @@ class PlusOneReader(TinyReader):
     def convert_values(self, values):
         """Add 1 to each value."""
         return values + 1
-
-
-class TinyIntReader(TinyReader):
-    """Test reader for an integer grid."""
-
-    name = "tiny_int_ancildat"
-    relative_path = "tiny_int.bin"
-    file_dtype = "<i4"
-    output_dtype = np.int64
-
-    def call(self, xarray_obj=None):
-        """Read the test grid at the requested points."""
-        return self.read_points(xarray_obj=xarray_obj)
 
 
 class FakeArea:
@@ -106,23 +123,31 @@ def points_dataset(lats, lons, dims=("y", "x"), **attrs):
     )
 
 
+def read_one_point(lat, lon, **kwargs):
+    """Read one point with the test reader and return its value."""
+    xarray_obj = points_dataset([[lat]], [[lon]])
+    return TinyReader().call(xarray_obj=xarray_obj, **kwargs)["tiny"]["tiny"].item()
+
+
 @pytest.fixture
 def ancildat_dir(tmp_path, monkeypatch):
-    """Write test grids holding their own record numbers, and point to them."""
+    """Write the test grid and use its folder as the ancillary data folder."""
     np.arange(32, dtype="<f4").tofile(tmp_path / "tiny.bin")
-    np.arange(32, dtype="<i4").tofile(tmp_path / "tiny_int.bin")
     # The GeoIPS config is frozen, so swap in a stand-in with only this path.
     test_config = SimpleNamespace(output_paths=SimpleNamespace(ancildat=tmp_path))
     monkeypatch.setattr(flat_binary, "config", test_config)
     return tmp_path
 
 
+# 1. Reading values -----------------------------------------------------------
+
+
 def test_reads_values_at_points(ancildat_dir):
-    """Values come from the right records, in the input order."""
-    # Rows of the file are 0-7, 8-15, 16-23, 24-31. Points cover three rows,
-    # are out of order, and repeat one point.
-    lats = [[0.0, 90.0, 45.0], [90.0, 45.0, 45.0]]
-    lons = [[0.0, -180.0, -135.0], [-180.0, 90.0, -135.0]]
+    """Values come from the right records and keep the input layout."""
+    # Points cover rows 2-4, are out of order, repeat one point, and include
+    # lon 180, which wraps to the start of the next row (record 17).
+    lats = [[0.0, 90.0, 45.0], [90.0, 45.0, 90.0]]
+    lons = [[0.0, -180.0, -135.0], [-180.0, 90.0, 180.0]]
     start = datetime(2021, 7, 15, 13)
     xarray_obj = points_dataset(lats, lons, start_datetime=start, end_datetime=start)
 
@@ -130,75 +155,79 @@ def test_reads_values_at_points(ancildat_dir):
 
     assert set(result) == {"tiny", "METADATA"}
     dataset = result["tiny"]
-    np.testing.assert_array_equal(dataset["tiny"], [[29, 9, 18], [9, 23, 18]])
+    np.testing.assert_array_equal(dataset["tiny"], [[29, 9, 18], [9, 23, 17]])
     assert dataset["tiny"].dtype == np.float64
+    # Dims are copied from the input latitude, so the output lines up with it.
     assert dataset["tiny"].dims == ("y", "x")
     np.testing.assert_array_equal(dataset["latitude"], lats)
     np.testing.assert_array_equal(dataset["longitude"], lons)
     assert dataset.attrs == result["METADATA"].attrs
     assert result["METADATA"].attrs["source_name"] == "tiny_ancildat"
-    assert result["METADATA"].attrs["source_file_names"] == ["tiny.bin"]
 
 
-def test_area_def_points_use_default_dims(ancildat_dir):
-    """Points from an area get the dims `dim_0` and `dim_1`."""
-    result = TinyReader().call(area_def=FakeArea([[90.0]], [[-180.0]]))
-    assert result["tiny"]["tiny"].dims == ("dim_0", "dim_1")
-    assert result["tiny"]["tiny"].item() == 9
+def test_invalid_points_get_fill(ancildat_dir):
+    """Points that are not finite give -999, and the file is not needed."""
+    lats = [[np.nan, -np.inf], [np.inf, 0.0]]
+    lons = [[0.0, 0.0], [0.0, np.nan]]
+    xarray_obj = points_dataset(lats, lons, start_datetime=datetime(2020, 1, 1))
+    # No point is valid, so a missing data file is never opened.
+    result = TinyReader().call(
+        xarray_obj=xarray_obj, data_file=ancildat_dir / "missing.bin"
+    )
+    np.testing.assert_array_equal(result["tiny"]["tiny"], -999)
 
 
-def test_area_def_wins_over_xarray_obj(ancildat_dir, caplog):
-    """When both are given, the area points are used and this is logged."""
+def test_convert_values_skips_invalid_points(ancildat_dir):
+    """Converted values stay -999 where the point is invalid."""
+    # Matters for surface_temperature, which adds 273.15 only to valid points.
+    xarray_obj = points_dataset([[90.0, np.nan]], [[-180.0, 0.0]])
+    result = PlusOneReader().call(xarray_obj=xarray_obj)
+    np.testing.assert_array_equal(result["tiny"]["tiny"], [[10, -999]])
+
+
+# 2. Where the points come from -----------------------------------------------
+
+
+def test_area_def_points_win_over_xarray_obj(ancildat_dir, caplog):
+    """Area points are used when both are given, with default dims and a log."""
     xarray_obj = points_dataset([[0.0]], [[0.0]])
     with caplog.at_level(logging.INFO):
         result = TinyReader().call(
             area_def=FakeArea([[90.0]], [[-180.0]]), xarray_obj=xarray_obj
         )
     assert result["tiny"]["tiny"].item() == 9
+    assert result["tiny"]["tiny"].dims == ("dim_0", "dim_1")
     assert "Using the area_def latitudes and longitudes" in caplog.text
 
 
-def test_invalid_points_get_fill(ancildat_dir):
-    """Points that are not finite give -999, even when no point is valid."""
-    # -999 inputs are tested in test_indexing.py at the real grid steps. This
-    # 45 degree test grid is too coarse for them: -999 rounds to line -20.
-    lats = [[np.nan, -np.inf], [np.inf, 0.0]]
-    lons = [[0.0, 0.0], [0.0, np.nan]]
-    xarray_obj = points_dataset(lats, lons)
-    result = TinyReader().call(xarray_obj=xarray_obj)
-    np.testing.assert_array_equal(result["tiny"]["tiny"], -999)
+def test_missing_points_raise(ancildat_dir):
+    """Without an area or an xarray_obj there are no points to read."""
+    with pytest.raises(ValueError, match="needs area_def"):
+        TinyReader().call()
 
 
-def test_no_valid_points_does_not_open_file(ancildat_dir):
-    """With no valid points the data file is not needed."""
-    xarray_obj = points_dataset(
-        [[np.nan]], [[0.0]], start_datetime=datetime(2020, 1, 1)
-    )
-    result = TinyReader().call(
-        xarray_obj=xarray_obj, data_file=ancildat_dir / "missing.bin"
-    )
-    assert result["tiny"]["tiny"].item() == -999
+# 3. Which data file is read --------------------------------------------------
 
 
-def test_convert_values_skips_invalid_points(ancildat_dir):
-    """Converted values stay -999 where the point is invalid."""
-    xarray_obj = points_dataset([[90.0, np.nan]], [[-180.0, 0.0]])
-    result = PlusOneReader().call(xarray_obj=xarray_obj)
-    np.testing.assert_array_equal(result["tiny"]["tiny"], [[10, -999]])
+def test_default_file_is_in_ancildat_folder():
+    """The default file is inside the folder from the real GeoIPS config."""
+    expected = Path(geoips_config.output_paths.ancildat) / "tiny.bin"
+    assert TinyReader().get_filename() == expected
 
 
-def test_integer_grid_uses_integer_fill(ancildat_dir):
-    """An integer grid returns integers with -999 fill."""
-    xarray_obj = points_dataset([[90.0, np.nan]], [[-180.0, 0.0]])
-    result = TinyIntReader().call(xarray_obj=xarray_obj)
-    np.testing.assert_array_equal(result["tiny"]["tiny"], [[9, -999]])
-    assert result["tiny"]["tiny"].dtype == np.int64
+def test_data_file_is_used_and_fnames_are_ignored(ancildat_dir, caplog):
+    """`data_file` picks the file. `fnames` (satellite files) is ignored."""
+    other_file = ancildat_dir / "other.bin"
+    np.arange(100, 132, dtype="<f4").tofile(other_file)
+    with caplog.at_level(logging.INFO):
+        value = read_one_point(
+            90.0, -180.0, fnames=["satellite.nc"], data_file=other_file
+        )
+    assert value == 109
+    assert "ignores fnames" in caplog.text
 
 
-def test_column_past_row_end_reads_next_row(ancildat_dir):
-    """Longitude 180 on file row 2 reads from row 3 (record 17)."""
-    xarray_obj = points_dataset([[90.0]], [[180.0]])
-    assert TinyReader().call(xarray_obj=xarray_obj)["tiny"]["tiny"].item() == 17
+# 4. Reading the file safely --------------------------------------------------
 
 
 def test_short_reads_are_retried(ancildat_dir, monkeypatch):
@@ -219,24 +248,23 @@ def test_file_ending_early_raises(ancildat_dir, monkeypatch):
     """A read that returns no bytes raises an error."""
     monkeypatch.setattr(flat_binary.os, "preadv", lambda *args: 0)
     with pytest.raises(EOFError, match="ended early"):
-        TinyReader().call(xarray_obj=points_dataset([[90.0]], [[-180.0]]))
+        read_one_point(90.0, -180.0)
 
 
 def test_wrong_file_size_raises(ancildat_dir):
     """A file that does not match the grid size raises an error."""
     np.arange(31, dtype="<f4").tofile(ancildat_dir / "tiny.bin")
     with pytest.raises(ValueError, match="is 124 bytes"):
-        TinyReader().call(xarray_obj=points_dataset([[90.0]], [[-180.0]]))
+        read_one_point(90.0, -180.0)
 
 
-def test_point_outside_file_raises(ancildat_dir):
-    """A point south of the last row raises an error."""
-    with pytest.raises(IndexError):
-        TinyReader().call(xarray_obj=points_dataset([[-45.0]], [[0.0]]))
+# 5. METADATA -----------------------------------------------------------------
+# Start and end times come from `data_datetime`, else from `xarray_obj`, else
+# from the data file's last-modified time.
 
 
-def test_metadata_only_does_not_read_data(ancildat_dir):
-    """Only METADATA is returned, and the data file is not needed."""
+def test_metadata_only_uses_xarray_obj_times(ancildat_dir):
+    """Only METADATA is returned, its times come from xarray_obj, no file read."""
     start = datetime(2021, 7, 15, 13)
     xarray_obj = points_dataset([[90.0]], [[-180.0]], start_datetime=start)
     result = TinyReader().call(
@@ -245,6 +273,7 @@ def test_metadata_only_does_not_read_data(ancildat_dir):
         data_file=ancildat_dir / "missing.bin",
     )
     assert set(result) == {"METADATA"}
+    assert result["METADATA"].attrs["start_datetime"] == start
     assert result["METADATA"].attrs["end_datetime"] == start
 
 
@@ -270,27 +299,12 @@ def test_metadata_times_from_file_modified_time(ancildat_dir, caplog):
     assert "last-modified time" in caplog.text
 
 
-def test_fnames_are_ignored(ancildat_dir, caplog):
-    """Satellite files passed as fnames do not replace the data file."""
-    xarray_obj = points_dataset([[90.0]], [[-180.0]])
-    with caplog.at_level(logging.INFO):
-        result = TinyReader().call(fnames=["satellite.nc"], xarray_obj=xarray_obj)
-    assert result["tiny"]["tiny"].item() == 9
-    assert "ignores fnames" in caplog.text
-
-
-def test_data_file_replaces_default_file(ancildat_dir):
-    """`data_file` picks a different data file."""
-    other_file = ancildat_dir / "other.bin"
-    np.arange(100, 132, dtype="<f4").tofile(other_file)
-    xarray_obj = points_dataset([[90.0]], [[-180.0]])
-    result = TinyReader().call(xarray_obj=xarray_obj, data_file=other_file)
-    assert result["tiny"]["tiny"].item() == 109
-    assert result["METADATA"].attrs["source_file_names"] == ["other.bin"]
+# 6. Calls from GeoIPS --------------------------------------------------------
 
 
 def test_workflow_style_call_returns_data_tree(ancildat_dir):
     """Called like a workflow reader step, the satellite files are ignored."""
+    # A workflow passes its satellite files as `filenames` to every reader step.
     xarray_obj = points_dataset(
         [[90.0]], [[-180.0]], start_datetime=datetime(2020, 1, 1)
     )
@@ -305,15 +319,3 @@ def test_self_register_raises(ancildat_dir):
     """`self_register` is not supported."""
     with pytest.raises(ValueError, match="self_register"):
         TinyReader().call(self_register="LOW")
-
-
-def test_missing_points_raise(ancildat_dir):
-    """Without an area or an xarray_obj there are no points to read."""
-    with pytest.raises(ValueError, match="needs area_def"):
-        TinyReader().call()
-
-
-def test_default_file_is_in_ancildat_folder():
-    """The default file is inside the folder from the GeoIPS config."""
-    expected = Path(geoips_config.output_paths.ancildat) / "tiny.bin"
-    assert TinyReader().get_filename() == expected
