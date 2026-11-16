@@ -1,16 +1,7 @@
-# @ pyproject.toml specifies how to install your package, and ensures it is
-# @ installed as a valid GeoIPS plugin package.
-
-# @ Replace all instances of @ within this template with appropriate values for
-# @ your particular use case.
-# @ Once complete, remove all lines containing "@" from this file.
-
 [tool.poetry]
-# @ Update with your package name, ie:
-# @ name = "@package@"  # package available at the root of the project
-name = "my_package" # package available at the root of the project
+name = "geoips_ancildat" # package available at the root of the project
 version = "0.0.0"
-description = "@package@ GeoIPS Plugin Package"
+description = "geoips_ancildat GeoIPS Plugin Package"
 authors = []
 readme = "README.md"
 keywords = []
@@ -18,12 +9,10 @@ license = "LICENSE" # required
 classifiers = [ # // list of PyPI trove classifiers to describe the project
     "Programming Language :: Python :: 3",
 ]
-repository = "https://github.com/NRLMMD-GEOIPS/@package@"
+repository = "https://github.com/NRLMMD-GEOIPS/geoips_ancildat"
 #documentation = "set the url"
 include = ["**/*.txt", "**/*.py", "**/*.yaml"]
-# @ Update with your package name, ie:
-# @ packages = [{include = "@package@"}]  # package available at the root of the project
-packages = [{include = "my_package"}]
+packages = [{include = "geoips_ancildat"}]
 
 # uses current version .postN and not incrementing
 [tool.poetry-dynamic-versioning]
@@ -53,10 +42,8 @@ python = ">=3.10.0" # mandatory to declare the required python version
 # "matplotlib" = "*"
 # "xarray" = "*"
 
-# All plugins within the "@package@" package are automatically discovered
+# All plugins within the "geoips_ancildat" package are automatically discovered
 # during the plugin registry process.
 
 [tool.poetry.plugins."geoips.plugin_packages"]
-# @ Update with your package name, ie:
-# @ "@package@" = "@package@"
-"my_package" = "my_package"
+"geoips_ancildat" = "geoips_ancildat"
