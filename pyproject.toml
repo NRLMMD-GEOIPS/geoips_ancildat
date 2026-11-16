@@ -2,7 +2,7 @@
 name = "geoips_ancildat" # package available at the root of the project
 version = "0.0.0"
 description = "geoips_ancildat GeoIPS Plugin Package"
-authors = []
+authors = ["Coleman McClelland", "coleman.mcclelland@colostate.edu"]
 readme = "README.md"
 keywords = []
 license = "LICENSE" # required
@@ -38,9 +38,10 @@ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
 build-backend = "poetry_dynamic_versioning.backend"                          # object used to perform the build process
 
 [tool.poetry.dependencies] # Include any python dependencies here
-python = ">=3.10.0" # mandatory to declare the required python version
-# "matplotlib" = "*"
-# "xarray" = "*"
+python = ">=3.11.0" # mandatory to declare the required python version
+"numpy" = "*"
+"xarray" = "*"
+"geoips" = "*"
 
 # All plugins within the "geoips_ancildat" package are automatically discovered
 # during the plugin registry process.
