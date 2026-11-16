@@ -7,7 +7,6 @@ Provides command-line options and fixtures to control test behavior
 when required test data files are missing.
 """
 
-import os
 from pathlib import Path
 
 import pytest
@@ -83,26 +82,3 @@ def require_file(fail_on_missing_data):
             )
 
     return check
-
-
-@pytest.fixture
-def golden_dir(fail_on_missing_data):
-    """Return the folder that holds the Fortran golden outputs.
-
-    The goldens stay outside the repository until the team decides where to
-    keep them. Point `GEOIPS_ANCILDAT_GOLDEN_DIR` at the folder for now. Once
-    the location is settled, change this fixture to use it.
-
-    Returns
-    -------
-    pathlib.Path
-        Folder with one `<dataset>__<grid>.npz` file per golden case.
-    """
-    folder = os.environ.get("GEOIPS_ANCILDAT_GOLDEN_DIR")
-    if not folder or not Path(folder).is_dir():
-        fail_or_skip(
-            "Set GEOIPS_ANCILDAT_GOLDEN_DIR to the folder of Fortran golden "
-            "outputs.",
-            fail_on_missing_data,
-        )
-    return Path(folder)

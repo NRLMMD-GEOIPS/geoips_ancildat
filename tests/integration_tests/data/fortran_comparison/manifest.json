@@ -1,0 +1,691 @@
+{
+  "geoips_ancildat_dir": "/local/share/geoips/test_data",
+  "libancildat": "/local/home/coleman/geoips/ancildat/ancildat/lib/libancildat.so",
+  "hash_algorithm": "blake2b (methods.hash_array)",
+  "fill_value": -999,
+  "fortran_resolutions": {
+    "city_lights": {
+      "lon_res": 0.004166666883975267,
+      "lat_res": 0.004166666883975267
+    },
+    "land_sea_mask": {
+      "lon_res": 0.008333333767950535,
+      "lat_res": 0.008333333767950535
+    },
+    "elevation": {
+      "lon_res": 0.008333333767950535,
+      "lat_res": 0.008333333767950535
+    },
+    "surface_temperature": {
+      "lon_res": 0.6666666865348816,
+      "lat_res": 0.5
+    },
+    "surface_emissivity": {
+      "lon_res": 0.05000000074505806,
+      "lat_res": 0.05000000074505806
+    }
+  },
+  "notes": {
+    "edges_nan_points": "In every edges grid, flat points 16 (lat NaN) and 17 (lon NaN) hold what this gfortran build returns: it reads row 1 (NaN lat) or column 1 (NaN lon). geoips_ancildat returns -999 there on purpose, so its tests expect -999 at these two points.",
+    "data_sentinels": "Values stored in the data files pass through unchanged: city_lights -999 near the poles, elevation -32768, emissivity -9999. Only invalid indices produce the -999 fill.",
+    "identical_emissivity_files": "AHI, ABI and CLAVRX-ABI emissivity files are byte-identical, so these goldens cannot catch a wrong sensor directory."
+  },
+  "cases": [
+    {
+      "dataset": "city_lights",
+      "case": "southeast_asia",
+      "grid": "southeast_asia",
+      "call_args": {},
+      "golden_file": "city_lights__southeast_asia.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "607c1bf551825dd9ffc4794f63cb3de0b75c9304f06ee4cef540503d98127b404a97cca02ae2e0eca78e23cefd46f1cf8ffcd47d8489a0ee123ac911205940e6",
+      "n_not_fill": 576,
+      "n_unique": 14,
+      "min_not_fill": 0.0,
+      "max_not_fill": 295.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "city_lights",
+      "case": "fine",
+      "grid": "fine",
+      "call_args": {},
+      "golden_file": "city_lights__fine.npz",
+      "shape": [
+        16,
+        16
+      ],
+      "output_dtype": "float64",
+      "blake2b": "28f10aad585c9f28348d36b9809e88181b719076b7bfe7fb3d557b933663161295f6add84218238d29feed0b21858ec53172e1696df8e12dce555c708a89e798",
+      "n_not_fill": 256,
+      "n_unique": 30,
+      "min_not_fill": 3.0,
+      "max_not_fill": 84.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "city_lights",
+      "case": "edges",
+      "grid": "edges",
+      "call_args": {},
+      "golden_file": "city_lights__edges.npz",
+      "shape": [
+        4,
+        8
+      ],
+      "output_dtype": "float64",
+      "blake2b": "3ab3e4c72ca933187994a74ae1348ed713df6d842b642cf3cfda0852bd1f8ae561833f3d5ccef51843fc50e61c11223f7409f4d3c967cc23c099ba0f40a42751",
+      "n_not_fill": 19,
+      "n_unique": 5,
+      "min_not_fill": 0.0,
+      "max_not_fill": 133.0,
+      "n_fill_mismatch": 10
+    },
+    {
+      "dataset": "land_sea_mask",
+      "case": "southeast_asia",
+      "grid": "southeast_asia",
+      "call_args": {},
+      "golden_file": "land_sea_mask__southeast_asia.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "int64",
+      "blake2b": "94f255279598abb273975df8aac711787db342d9ea1a0ea2164f81c780691c53628d10cc131c8f9c293130952401b87241396d27d8ac99547cc7aeb4e0b6f04b",
+      "n_not_fill": 576,
+      "n_unique": 6,
+      "min_not_fill": 0.0,
+      "max_not_fill": 7.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "land_sea_mask",
+      "case": "fine",
+      "grid": "fine",
+      "call_args": {},
+      "golden_file": "land_sea_mask__fine.npz",
+      "shape": [
+        16,
+        16
+      ],
+      "output_dtype": "int64",
+      "blake2b": "ea790534f1a508b512cfac1b67aaac2ee632c0e098b953e4fd5fd7a5d05f9b7a8ec13a8493d3a160bbd65b0090691c49d487eb6d011df304e1bc776a230bdc2e",
+      "n_not_fill": 256,
+      "n_unique": 3,
+      "min_not_fill": 0.0,
+      "max_not_fill": 2.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "land_sea_mask",
+      "case": "edges",
+      "grid": "edges",
+      "call_args": {},
+      "golden_file": "land_sea_mask__edges.npz",
+      "shape": [
+        4,
+        8
+      ],
+      "output_dtype": "int64",
+      "blake2b": "4e729b9ca2780c0721476c5819637002764b8e805233c3b04877346af97e70ff46f3d896ca1ab227e92e2d35bffbab96b591379e80cdc7f95bf9eee9d0808911",
+      "n_not_fill": 29,
+      "n_unique": 5,
+      "min_not_fill": 0.0,
+      "max_not_fill": 7.0,
+      "n_fill_mismatch": 2
+    },
+    {
+      "dataset": "elevation",
+      "case": "southeast_asia",
+      "grid": "southeast_asia",
+      "call_args": {},
+      "golden_file": "elevation__southeast_asia.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "int64",
+      "blake2b": "90ac80ebd1328616778b8f7a09ba83a50598c57116089f700b42b952d6d6a463b1d325ba76b05334980dd91fe057675c2d262f086997951ec34132e49d7cc5f6",
+      "n_not_fill": 576,
+      "n_unique": 230,
+      "min_not_fill": 0.0,
+      "max_not_fill": 2035.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "elevation",
+      "case": "fine",
+      "grid": "fine",
+      "call_args": {},
+      "golden_file": "elevation__fine.npz",
+      "shape": [
+        16,
+        16
+      ],
+      "output_dtype": "int64",
+      "blake2b": "9f5a71162ed5a49f78636c2e1d5e2a8e2991d8e8d9f268b432dde0c7046a5f6f512045121cdcc898e9980a70fb5820b0d4e4f1a91c09eec3a1f9f96c7c5c2e16",
+      "n_not_fill": 256,
+      "n_unique": 12,
+      "min_not_fill": 0.0,
+      "max_not_fill": 12.0,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "elevation",
+      "case": "edges",
+      "grid": "edges",
+      "call_args": {},
+      "golden_file": "elevation__edges.npz",
+      "shape": [
+        4,
+        8
+      ],
+      "output_dtype": "int64",
+      "blake2b": "19018c44e4470c449472f461dc9f6721c80a3b78544565320991cc6316f5194437bbd574ee4adf14ad61834eb852bae25983068c273bbdc66ac40b07572b0af8",
+      "n_not_fill": 29,
+      "n_unique": 11,
+      "min_not_fill": -32768.0,
+      "max_not_fill": 2941.0,
+      "n_fill_mismatch": 2
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "global_20210715_13",
+      "grid": "global",
+      "call_args": {
+        "datetime": "2021-07-15T13:45:00Z"
+      },
+      "golden_file": "surface_temperature__global_20210715_13.npz",
+      "shape": [
+        12,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "d60259ad1db2dc6009b19527664d519a00f571128a3e5ac4db7deb60f076d972042756baef525b85ef5ff2e02a42cf9078b6cbb12d039e0aef4ade399644927c",
+      "n_not_fill": 288,
+      "n_unique": 260,
+      "min_not_fill": 211.5,
+      "max_not_fill": 329.4700012207031,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "global_20200101_00",
+      "grid": "global",
+      "call_args": {
+        "datetime": "2020-01-01T00:00:00Z"
+      },
+      "golden_file": "surface_temperature__global_20200101_00.npz",
+      "shape": [
+        12,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "8c34715f24178ee6d6e857c1ef63d494c9ba66f7baef1f5cb2398590deca717b826dea9b7b477ba6a55a53ae8a0dd87660701367839cd3eef5e7145627e5beb7",
+      "n_not_fill": 288,
+      "n_unique": 279,
+      "min_not_fill": 230.59999084472656,
+      "max_not_fill": 320.1099853515625,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "global_20200301_06",
+      "grid": "global",
+      "call_args": {
+        "datetime": "2020-03-01T06:00:00Z"
+      },
+      "golden_file": "surface_temperature__global_20200301_06.npz",
+      "shape": [
+        12,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "db5bbab9699b3c689a7b2c2bd9cc2b4fb5b5c5656b70ab1c7cbc3844611bf3bbe62dca69938b8aa774fac6b203e102a8fbd9f16f6aaaf0b8c70e460946efd0dd",
+      "n_not_fill": 288,
+      "n_unique": 275,
+      "min_not_fill": 222.77999877929688,
+      "max_not_fill": 317.8399963378906,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "global_20211231_23",
+      "grid": "global",
+      "call_args": {
+        "datetime": "2021-12-31T23:59:59Z"
+      },
+      "golden_file": "surface_temperature__global_20211231_23.npz",
+      "shape": [
+        12,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "4ba939afc662fabe783a587095217f1352e15c841ac23b9561c4d70134e9f45e71b55068c307bbc4b8c6ea29353ff8149cf22b3a9bfb23f9e6ef03f57fdc975c",
+      "n_not_fill": 288,
+      "n_unique": 279,
+      "min_not_fill": 230.1599884033203,
+      "max_not_fill": 315.92999267578125,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "fine",
+      "grid": "fine",
+      "call_args": {
+        "datetime": "2021-07-15T13:45:00Z"
+      },
+      "golden_file": "surface_temperature__fine.npz",
+      "shape": [
+        16,
+        16
+      ],
+      "output_dtype": "float64",
+      "blake2b": "ed1e51a42f27e8efbfcc950cf399d2cb99f8abdc56a3261b7e5e2cc55592b7a2b0290ed64145d50289fe933112bb64805e4fe974d5a0b556b488ad1e0c5a40c9",
+      "n_not_fill": 256,
+      "n_unique": 43,
+      "min_not_fill": 297.4700012207031,
+      "max_not_fill": 302.91998291015625,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_temperature",
+      "case": "edges",
+      "grid": "edges",
+      "call_args": {
+        "datetime": "2021-07-15T13:45:00Z"
+      },
+      "golden_file": "surface_temperature__edges.npz",
+      "shape": [
+        4,
+        8
+      ],
+      "output_dtype": "float64",
+      "blake2b": "066d92757246db96386cd5b25dfbbe954a83bfaf949db285cb70c905f372bd23c60a086d0b99ed4a867186a5e395a23569689312de6fabeb757f7798d8e9647f",
+      "n_not_fill": 29,
+      "n_unique": 24,
+      "min_not_fill": 212.88999938964844,
+      "max_not_fill": 302.6499938964844,
+      "n_fill_mismatch": 2
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_ahi_B11_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "ahi",
+        "channel": "B11",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_ahi_B11_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "561a6914b86be55b4a2c6a54d34ca80eca6b5ff8c2c15638e4a6520110c0d9b8a5ba5f868158ebbafc8bec57e43977a2ddaf2346b527d964fd0a3464466bdc01",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9762418866157532,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_ahi_B13_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "ahi",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_ahi_B13_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "bf52e38f88171e1152f9aee166382549115faaca26a1a857acd1299340adfb4cdaf3d20259f75e4a76f69813e1a10562f4ffaf82d4bc37f518995b6ccbd68aeb",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9774307012557983,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_ahi_B15_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "ahi",
+        "channel": "B15",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_ahi_B15_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "dbda13e825d0ac21c6305becde04ba4d178fca8fea5f62fc0d7c2b9978da2d3dbb6e65261ecaee86d0fa78e8937f529e6257cece63aaffa1f1655b573e222273",
+      "n_not_fill": 576,
+      "n_unique": 342,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9754611849784851,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_abi_B11_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B11",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_abi_B11_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "561a6914b86be55b4a2c6a54d34ca80eca6b5ff8c2c15638e4a6520110c0d9b8a5ba5f868158ebbafc8bec57e43977a2ddaf2346b527d964fd0a3464466bdc01",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9762418866157532,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_abi_B13_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_abi_B13_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "bf52e38f88171e1152f9aee166382549115faaca26a1a857acd1299340adfb4cdaf3d20259f75e4a76f69813e1a10562f4ffaf82d4bc37f518995b6ccbd68aeb",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9774307012557983,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_abi_B15_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B15",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_abi_B15_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "dbda13e825d0ac21c6305becde04ba4d178fca8fea5f62fc0d7c2b9978da2d3dbb6e65261ecaee86d0fa78e8937f529e6257cece63aaffa1f1655b573e222273",
+      "n_not_fill": 576,
+      "n_unique": 342,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9754611849784851,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_clavrx-abi_B11_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "clavrx-abi",
+        "channel": "B11",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_clavrx-abi_B11_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "561a6914b86be55b4a2c6a54d34ca80eca6b5ff8c2c15638e4a6520110c0d9b8a5ba5f868158ebbafc8bec57e43977a2ddaf2346b527d964fd0a3464466bdc01",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9762418866157532,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_clavrx-abi_B13_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "clavrx-abi",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_clavrx-abi_B13_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "bf52e38f88171e1152f9aee166382549115faaca26a1a857acd1299340adfb4cdaf3d20259f75e4a76f69813e1a10562f4ffaf82d4bc37f518995b6ccbd68aeb",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9774307012557983,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_clavrx-abi_B15_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "clavrx-abi",
+        "channel": "B15",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_clavrx-abi_B15_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "dbda13e825d0ac21c6305becde04ba4d178fca8fea5f62fc0d7c2b9978da2d3dbb6e65261ecaee86d0fa78e8937f529e6257cece63aaffa1f1655b573e222273",
+      "n_not_fill": 576,
+      "n_unique": 342,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9754611849784851,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_seviri_B07_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "seviri",
+        "channel": "B07",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_seviri_B07_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "baba125413e5be90ef99abd97ecb1d1fefaaa13bd61e9862c735968f88a2d409519af948d766d274332e8df22b3c972c6311792ddfc1e9c7fd2147a52602a906",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9734984040260315,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_seviri_B09_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "seviri",
+        "channel": "B09",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_seviri_B09_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "7d8d05bb8733ae944edc0fa98c4af93a6028f88711359624f1b42bceda5f3c198fca1091449943a83f0a0de29215ed85a79504e795385e5c0a1dbd738ebbfda9",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9790973663330078,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_seviri_B10_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "seviri",
+        "channel": "B10",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_seviri_B10_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "bc3e2a36ecfd3aa49f73c6a59a86ad622779e76ac6246aa8ad782edcabf9d2794fe80fa894dfc49764c59670360de5d4fdc269a170aaf1adb625788aab625c8d",
+      "n_not_fill": 576,
+      "n_unique": 342,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.976919949054718,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_abi_B13_m01",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B13",
+        "month": 1
+      },
+      "golden_file": "surface_emissivity__southeast_asia_abi_B13_m01.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "108247c42322be5c5af89db6c1209a2fb25dff061f22abbb6cda3ddc5972dfc05681f65d3aaca3388e8d6b9d8b87529c0b7b5b8cc0b35ce6cc558c4bb505f19c",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9795085787773132,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_abi_B13_m12",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B13",
+        "month": 12
+      },
+      "golden_file": "surface_emissivity__southeast_asia_abi_B13_m12.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "33d444da2b6ba8e1390d635988950125b651e8b4da1277bf57cda8be72a179f8029147c81b74459465e97c96df7cf44c1bc9d81496643ecda90ffbb3cbd95a8f",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9786200523376465,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "southeast_asia_AHI_B13_m07",
+      "grid": "southeast_asia",
+      "call_args": {
+        "sensor": "AHI",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__southeast_asia_AHI_B13_m07.npz",
+      "shape": [
+        24,
+        24
+      ],
+      "output_dtype": "float64",
+      "blake2b": "bf52e38f88171e1152f9aee166382549115faaca26a1a857acd1299340adfb4cdaf3d20259f75e4a76f69813e1a10562f4ffaf82d4bc37f518995b6ccbd68aeb",
+      "n_not_fill": 576,
+      "n_unique": 343,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9774307012557983,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "fine_abi_B13_m07",
+      "grid": "fine",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__fine_abi_B13_m07.npz",
+      "shape": [
+        16,
+        16
+      ],
+      "output_dtype": "float64",
+      "blake2b": "218bb91f4a70d2de6a9b3eac4070fb51f18f7e92220451faa2d8121096041b4818e01a28e47cd1d24478c5c461efdb945cdce81b23934232e9adc9a99f5be55d",
+      "n_not_fill": 256,
+      "n_unique": 26,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9803131818771362,
+      "n_fill_mismatch": 0
+    },
+    {
+      "dataset": "surface_emissivity",
+      "case": "edges_abi_B13_m07",
+      "grid": "edges",
+      "call_args": {
+        "sensor": "abi",
+        "channel": "B13",
+        "month": 7
+      },
+      "golden_file": "surface_emissivity__edges_abi_B13_m07.npz",
+      "shape": [
+        4,
+        8
+      ],
+      "output_dtype": "float64",
+      "blake2b": "3bc2c339f88da3898c9aba5a40def8c6f7928c9536d0f53456ee8806094168d96cb834514ca451721fb00739a95b2a3b590ed52fe9714bcefeb74c982456a5d6",
+      "n_not_fill": 29,
+      "n_unique": 8,
+      "min_not_fill": -9999.0,
+      "max_not_fill": 0.9838752150535583,
+      "n_fill_mismatch": 2
+    }
+  ]
+}

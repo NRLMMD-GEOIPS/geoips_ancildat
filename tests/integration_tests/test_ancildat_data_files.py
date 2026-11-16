@@ -5,6 +5,7 @@
 
 This is the only check that the data is present. The readers do not check
 when they run. Run with `--no-fail-on-missing-data` to skip instead of fail.
+These are integration tests because they need the installed data.
 """
 
 import numpy as np
@@ -20,6 +21,8 @@ from geoips_ancildat.plugins.classes.readers.land_sea_mask import (
 from geoips_ancildat.plugins.classes.readers.surface_temperature import (
     SurfaceTemperatureReaderPlugin,
 )
+
+pytestmark = [pytest.mark.integration, pytest.mark.full]
 
 
 @pytest.mark.parametrize(
