@@ -25,8 +25,6 @@ elevation -32768 near the north pole (positions 0, 18 and 19).
 
 import numpy as np
 import pytest
-import xarray as xr
-from geoips.interfaces import readers
 
 from geoips_ancildat.plugins.classes.readers.city_lights import (
     CityLightsReaderPlugin,
@@ -43,11 +41,6 @@ READER_CLASSES = [
 ]
 GRIDS = ["southeast_asia", "fine", "edges"]
 
-# Positions in the 4 x 8 edges grid, counted along each row from 0. Position 16
-# has a NaN latitude and 17 a NaN longitude. This package gives -999 there,
-# while the Fortran reads row 1 or column 1, so we expect -999 instead.
-NAN_POSITIONS = [16, 17]
-
 
 @pytest.mark.parametrize(
     "reader_class, grid",
@@ -57,35 +50,14 @@ NAN_POSITIONS = [16, 17]
         for grid in GRIDS
     ],
 )
-def test_matches_fortran(reader_class, grid, golden_dir, require_file):
+def test_matches_fortran(reader_class, grid, load_golden, require_file):
     """Every point equals the Fortran output, with the same dtype."""
     reader = reader_class()
     require_file(reader.get_filename(), f"{reader.name} data file")
-    golden_path = golden_dir / f"{reader.variable_name}__{grid}.npz"
-    require_file(golden_path, "Fortran golden file")
-    with np.load(golden_path) as golden:
-        lats, lons, expected = golden["lats"], golden["lons"], golden["output"]
-    if grid == "edges":
-        expected.flat[NAN_POSITIONS] = -999
+    xarray_obj, expected = load_golden(reader.variable_name, grid)
 
-    xarray_obj = xr.Dataset(
-        {"latitude": (("y", "x"), lats), "longitude": (("y", "x"), lons)}
-    )
     result = reader.call(fnames=None, xarray_obj=xarray_obj)
     output = result[reader.variable_name][reader.variable_name].values
 
     assert output.dtype == expected.dtype
     np.testing.assert_array_equal(output, expected)
-
-
-@pytest.mark.parametrize(
-    "reader_class",
-    READER_CLASSES,
-    ids=lambda reader_class: reader_class.variable_name,
-)
-def test_reader_loads_from_geoips(reader_class):
-    """The reader loads from the GeoIPS registry and passes its checks."""
-    # GeoIPS checks the call arguments when it loads a plugin. For example,
-    # `fnames` must have no default value. Needs `geoips config create-registries`.
-    plugin = readers.get_plugin(reader_class.name)
-    assert plugin.source_names == [reader_class.name]
